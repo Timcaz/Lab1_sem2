@@ -1,53 +1,81 @@
-﻿namespace ConsoleApp1
+﻿using System.Security.Cryptography.X509Certificates;
+
+namespace ConsoleApp1
 {
     internal class Program
     {
         public delegate int Action(int a, int b);
-        public delegate int Delegate(int a, int b);
+        public delegate void Delegate(int a);
         static void Main(string[] args)
         {
-            Console.WriteLine("Введіть перше число:");
-            int a = Convert.ToInt32(Console.ReadLine());
-            Console.WriteLine("Введіть друге число:");
-            int b = Convert.ToInt32(Console.ReadLine());
-            Console.WriteLine("Виберіть дію +, -, *, / :");
-            string action = Console.ReadLine();
-            switch (action)
+            Console.WriteLine("Введіть арифметичний вираз:");
+            string input = Console.ReadLine();
+            string[] tokens = input.Split(' ');
+            if (tokens.Length != 3)
+            {
+                Console.WriteLine("Неправильний формат виразу.");
+                return;
+            }
+            if (!double.TryParse(tokens[0], out double number1) || !double.TryParse(tokens[2], out double number2))
+            {
+                Console.WriteLine("Неправильний формат чисел.");
+                return;
+            }
+            Func<double, double, double> operation;
+            switch (tokens[1])
             {
                 case "+":
-                    int action1 = new Action((a, b) =>
-                    {
-                        return a + b;
-                    }).Invoke(a, b);
-                    Console.WriteLine("Вiдповiдь: {0}", action1);
+                    operation = (x, y) => x + y;
                     break;
                 case "-":
-                    int action2 = new Action((a, b) =>
-                    {
-                        return a - b;
-                    }).Invoke(a, b);
-                    Console.WriteLine("Вiдповiдь: {0}", action2);
+                    operation = (x, y) => x - y;
                     break;
                 case "*":
-                    int action3 = new Action((a, b) =>
-                    {
-                        return a * b;
-                    }).Invoke(a, b);
-                    Console.WriteLine("Вiдповiдь: {0}", action3);
+                    operation = (x, y) => x * y;
                     break;
                 case "/":
-                    int action4 = new Action((a, b) =>
+                    operation = (x, y) =>
                     {
-                        if (b == 0)
+                        if (y == 0)
                         {
-                            Console.WriteLine("Не можна ділити на нуль");
-                            return 0;
-                        };
-                        return a / b;
-                    }).Invoke(a, b);
-                    Console.WriteLine("Вiдповiдь: {0}", action4);
+                            Console.WriteLine("Помилка: ділення на нуль.");
+                            return double.NaN;
+                        }
+                        return x / y;
+                    };
                     break;
+                default:
+                    Console.WriteLine("Неправильний оператор.");
+                    return;
             }
+            Console.WriteLine("Результат: " + operation(number1, number2));
+
+            Random rand = new Random();
+            Func<int>[] delegates = new Func<int>[] {
+            () => rand.Next(0, 10),
+            () => rand.Next(0, 100),
+            () => rand.Next(0, 100)
+            };
+
+            Func<Func<int>[], double> averageDelegateValues = delegate (Func<int>[] dels) {
+                int sum = 0;
+                foreach (Func<int> del in dels)
+                {
+                    sum += del();
+                }
+                return (double)sum / dels.Length;
+            };
+
+            double result = averageDelegateValues(delegates);
+            Console.WriteLine("Середнє значення: " + result);
+
+            
+            Func<int, int, int, double> average = delegate (int first, int second, int third) {
+                return (double)(first + second + third) / 3;
+            };
+
+            double res = average(1080, 2140, 1200);
+            Console.WriteLine("Середнє значення: " + res);
         }
     }
 }
